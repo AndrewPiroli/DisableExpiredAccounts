@@ -7,6 +7,7 @@ $UseEventLog = $true
 $EventLogDest = "Application"
 $EventLogSource = "DisableExpiredAccounts"
 $SendEmailReport = $true
+$AlwaysEmail = $false
 $PSEmailServer = "smtp.dundermifflin.com"
 # No Touch!
 $EmailRecipients = @()
@@ -87,16 +88,15 @@ foreach ($account in $ExpiredAccounts){
 }
 
 # Build report
-$EmailSubject = "DisableExpiredAccounts - Errors: $errors Warnings: $warnings"
+$EmailSubject = "DisableExpiredAccounts - Disabled: $success Errors: $errors Warnings: $warnings"
 $EmailBody = $report | Format-Table -HideTableHeaders | Out-String
 
-# 
 if ($TestMode){
     $EmailSubject += " TEST MODE"
     $EmailBody = "TEST MODE ENABLED`r`n$EmailBody"
 }
 
-if ($SendEmailReport){
+if ($SendEmailReport -And (($success -gt 0) -Or $AlwaysEmail)){
     $LocalHostname = $env:COMPUTERNAME
     $LocalDomain = Get-WMIObject Win32_ComputerSystem| Select-Object -ExpandProperty Domain
     Send-MailMessage -From "$LocalHostname@$LocalDomain" -To $EmailRecipients -Subject $EmailSubject -Body $EmailBody
