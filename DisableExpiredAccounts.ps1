@@ -53,10 +53,10 @@ foreach ($account in $ExpiredAccounts){
     }
     # Make sure the account shows no activity since expiration, this would be really weird. Loudly complain if this happens.
     if ($account.LastLogonDate -gt $account.AccountExpirationDate){
-        $report.Add($account.UserPrincipleName, "ERROR: LastLogonDate newer than AccountExpirationDate. Account left untouched!")
+        $report.Add($account.UserPrincipleName, "WARN: LastLogonDate newer than AccountExpirationDate. Account left untouched!")
         Write-Warning "Account Logged on since expiry. This should be impossible!!"
         if ($UseEventLog){
-            Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 500 -EntryType "Error" -Message "Account $($account.UserPrincipleName) has a LastLogonDate newer than its Expiration Date! Refusing to work on insane accounts"
+            Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 500 -EntryType "Warning" -Message "Account $($account.UserPrincipleName) has a LastLogonDate newer than its Expiration Date! Refusing to work on insane accounts"
         }
         $warnings++
         Continue
@@ -69,6 +69,7 @@ foreach ($account in $ExpiredAccounts){
         $DisableSuccess = $true
     }
     catch{
+        $report.Add($account.UserPrincipleName, "ERROR: Disable-ADAccount Failed!")
         Write-Warning "Disable-ADAccount failed - this usually means bad credentials!"
         if ($UseEventLog){
             Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 403 -EntryType "Error" -Message "Error disabling $($account.UserPrincipleName), suspect my user does not have Account Operator or better permissions"
