@@ -36,12 +36,12 @@ if ($UseEventLog){
 }
 
 # Set up a report for later at the end.
-$report = @{}
+$report = [ordered]@{}
 $report.Add("User Principle Name", "Status")
-$report.Add("@@@@@@@@@@@@@@@@@@@", "@@@@@@")
+$report.Add("@@@@@@@@@@", "@@@@@@")
 $warnings = 0
 $errors = 0
-
+$success = 0
 # Pull all expired user accounts
 $ExpiredAccounts = Search-ADAccount -AccountExpired -UsersOnly
 
@@ -53,10 +53,10 @@ foreach ($account in $ExpiredAccounts){
     }
     # Make sure the account shows no activity since expiration, this would be really weird. Loudly complain if this happens.
     if ($account.LastLogonDate -gt $account.AccountExpirationDate){
-        $report.Add($account.UserPrincipleName, "WARN: LastLogonDate newer than AccountExpirationDate. Account left untouched!")
+        $report.Add($account.UserPrincipalName, "WARN: LastLogonDate newer than AccountExpirationDate. Account left untouched!")
         Write-Warning "Account Logged on since expiry. This should be impossible!!"
         if ($UseEventLog){
-            Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 500 -EntryType "Warning" -Message "Account $($account.UserPrincipleName) has a LastLogonDate newer than its Expiration Date! Refusing to work on insane accounts"
+            Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 500 -EntryType "Warning" -Message "Account $($account.UserPrincipalName) has a LastLogonDate newer than its Expiration Date! Refusing to work on insane accounts"
         }
         $warnings++
         Continue
@@ -66,29 +66,31 @@ foreach ($account in $ExpiredAccounts){
         # Powershell is dumb, and does not let us try-catch-else, so we have to have to have this.....
         $DisableSuccess = $false
         Disable-ADAccount -Identity $account -WhatIf:$TestMode
+        $success++
         $DisableSuccess = $true
     }
     catch{
-        $report.Add($account.UserPrincipleName, "ERROR: Disable-ADAccount Failed!")
+        $report.Add($account.UserPrincipalName, "ERROR: Disable-ADAccount Failed!")
         Write-Warning "Disable-ADAccount failed - this usually means bad credentials!"
         if ($UseEventLog){
-            Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 403 -EntryType "Error" -Message "Error disabling $($account.UserPrincipleName), suspect my user does not have Account Operator or better permissions"
+            Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 403 -EntryType "Error" -Message "Error disabling $($account.UserPrincipalName), suspect my user does not have Account Operator or better permissions"
         }
         $errors++
     }
     if ($DisableSuccess){
-        $report.Add($report.Add($account.UserPrincipleName, "SUCCESS: Account disabled!"))
-        Write-Warning "Disabled $($account.UserPrincipleName)"
+        $report.Add($account.UserPrincipalName, "SUCCESS: Account disabled!")
+        Write-Warning "Disabled $($account.UserPrincipalName)"
         if ($UseEventLog){
-            Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 200 -Message "Account $($account.UserPrincipleName) disabled"
+            Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 200 -Message "Account $($account.UserPrincipalName) disabled"
         }
     }
 }
 
 # Build report
 $EmailSubject = "DisableExpiredAccounts - Errors: $errors Warnings: $warnings"
-$EmailBody = $report | Format-Table -HideTableHeaders
+$EmailBody = $report | Format-Table -HideTableHeaders | Out-String
 
+# 
 if ($TestMode){
     $EmailSubject += " TEST MODE"
     $EmailBody = "TEST MODE ENABLED`r`n$EmailBody"
