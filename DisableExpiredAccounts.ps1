@@ -108,6 +108,6 @@ Write-Warning $EmailSubject
 Write-Warning $EmailBody
 
 if ($UseEventLog){
-    Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 200 -Message "DisableExpiredAccounts script - done!"
+    Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 100 -Message "DisableExpiredAccounts script - done!"
 }
 Write-Warning "DisableExpiredAccounts script - done!"
