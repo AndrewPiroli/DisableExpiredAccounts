@@ -9,6 +9,7 @@ Run the script as a user with permissions to disable accounts, maybe set it up a
 ## User options
 
 User serviceable options:
+
 $TestMode, set to $true or $false to enable a dry run. No Changes will be made in AD
 
 $UseEventLog, set to $true or $false to enable Event Log logging.
