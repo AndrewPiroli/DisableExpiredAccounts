@@ -8,6 +8,7 @@ $EventLogDest = "Application"
 $EventLogSource = "DisableExpiredAccounts"
 $SendEmailReport = $true
 $AlwaysEmail = $false
+$ClearExpirationAfterDisable = $false
 $PSEmailServer = "smtp.dundermifflin.com"
 # No Touch!
 $EmailRecipients = @()
@@ -91,6 +92,17 @@ foreach ($account in $ExpiredAccounts){
         $report.Add($account.UserPrincipalName, "SUCCESS: Account disabled!")
         Write-Warning "Disabled $($account.UserPrincipalName)"
         Write-DEAEventLog -EventId 200 -Message "Account $($account.UserPrincipalName) disabled"
+        if ($ClearExpirationAfterDisable){
+            try{
+                Clear-ADAccountExpiration -Identity $account -WhatIf:$TestMode
+                Write-DEAEventlog -EventID 200 -Message "Cleared $($account.UserPrincipalName) expiration date!"
+                Write-Host "Cleared $($account.UserPrincipalName) expiration date!"
+            }
+            catch{
+                Write-DEAEventlog -EventID 403 -Message "Failed to clear expiration date: $($account.UserPrincipalName)"
+                Write-Host "Failed to clear expiration date: $($account.UserPrincipalName)"
+            }
+        }
     }
 }
 
