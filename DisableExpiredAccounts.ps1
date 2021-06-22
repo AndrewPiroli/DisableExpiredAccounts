@@ -16,6 +16,21 @@ $EmailRecipients = @()
 $EmailRecipients += "Michael Scott <mscott@dundermifflin.com>"
 # End user sericable options
 
+function Write-DEAEventlog {
+    param (
+        [Parameter(Mandatory=$true)]
+        $EventID,
+        [Parameter(Mandatory=$false)]
+        $Severity="Information",
+        [Parameter(Mandatory=$true)]
+        $Message
+    )
+    if ($UseEventLog -eq $false){
+        return
+    }
+    Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId $EventID -Message $Message -EntryType $Severity
+}
+
 # Setup Event Log
 if ($UseEventLog){
     $Error.Clear()
@@ -32,14 +47,12 @@ if ($UseEventLog){
     }
 }
 
-if ($UseEventLog){
-    Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 100 -Message "Disable Expired Accounts Script: Startup Complete"
-}
+Write-DEAEventLog -EventId 100 -Message "Disable Expired Accounts Script: Startup Complete"
 
 # Set up a report for later at the end.
 $report = [ordered]@{}
 $report.Add("User Principle Name", "Status")
-$report.Add("@@@@@@@@@@", "@@@@@@")
+$report.Add("`r`n", "")
 $warnings = 0
 $errors = 0
 $success = 0
@@ -56,9 +69,7 @@ foreach ($account in $ExpiredAccounts){
     if ($account.LastLogonDate -gt $account.AccountExpirationDate){
         $report.Add($account.UserPrincipalName, "WARN: LastLogonDate newer than AccountExpirationDate. Account left untouched!")
         Write-Warning "Account Logged on since expiry. This should be impossible!!"
-        if ($UseEventLog){
-            Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 500 -EntryType "Warning" -Message "Account $($account.UserPrincipalName) has a LastLogonDate newer than its Expiration Date! Refusing to work on insane accounts"
-        }
+        Write-DEAEventLog -EventId 500 -Severity "Warning" -Message "Account $($account.UserPrincipalName) has a LastLogonDate newer than its Expiration Date! Refusing to work on insane accounts"
         $warnings++
         Continue
     }
@@ -73,17 +84,13 @@ foreach ($account in $ExpiredAccounts){
     catch{
         $report.Add($account.UserPrincipalName, "ERROR: Disable-ADAccount Failed!")
         Write-Warning "Disable-ADAccount failed - this usually means bad credentials!"
-        if ($UseEventLog){
-            Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 403 -EntryType "Error" -Message "Error disabling $($account.UserPrincipalName), suspect my user does not have Account Operator or better permissions"
-        }
+        Write-DEAEventLog -EventId 403 -Severity "Error" -Message "Error disabling $($account.UserPrincipalName), suspect my user does not have Account Operator or better permissions"
         $errors++
     }
     if ($DisableSuccess){
         $report.Add($account.UserPrincipalName, "SUCCESS: Account disabled!")
         Write-Warning "Disabled $($account.UserPrincipalName)"
-        if ($UseEventLog){
-            Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 200 -Message "Account $($account.UserPrincipalName) disabled"
-        }
+        Write-DEAEventLog -EventId 200 -Message "Account $($account.UserPrincipalName) disabled"
     }
 }
 
@@ -101,15 +108,11 @@ if ($SendEmailReport -And (($success -gt 0) -Or $AlwaysEmail)){
     $LocalDomain = Get-WMIObject Win32_ComputerSystem| Select-Object -ExpandProperty Domain
     Send-MailMessage -From "$LocalHostname@$LocalDomain" -To $EmailRecipients -Subject $EmailSubject -Body $EmailBody
     Write-Warning "attempted to send email report"
-    if ($UseEventLog){
-        Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 200 -Message "Attemped to send email report!"
-    }
+    Write-DEAEventLog -EventId 200 -Message "Attemped to send email report!"
 }
 
 Write-Warning $EmailSubject
 Write-Warning $EmailBody
 
-if ($UseEventLog){
-    Write-EventLog -LogName $EventLogDest -Source $EventLogSource -EventId 100 -Message "DisableExpiredAccounts script - done!"
-}
+Write-DEAEventLog -EventId 100 -Message "DisableExpiredAccounts script - done!"
 Write-Warning "DisableExpiredAccounts script - done!"
