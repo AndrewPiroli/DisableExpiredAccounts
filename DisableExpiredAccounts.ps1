@@ -2,7 +2,6 @@
 
 # User servicable options
 $TestMode = $true
-
 $UseEventLog = $true
 $EventLogDest = "Application"
 $EventLogSource = "DisableExpiredAccounts"
@@ -17,6 +16,7 @@ $EmailRecipients = @()
 $EmailRecipients += "Michael Scott <mscott@dundermifflin.com>"
 # End user sericable options
 
+# Helper function for eventlog
 function Write-DEAEventlog {
     param (
         [Parameter(Mandatory=$true)]
@@ -39,11 +39,11 @@ if ($UseEventLog){
     # Powershell is dumb, and some exceptions can't be caught with a try-catch (why?)
     if ($Error[0]){
         if ($Error[0].ToString().Contains("Access is denied")){
-            Write-Warning "Could not create EventLog Source- Access Denied"
+            Write-Output "Could not create EventLog Source- Access Denied"
             $UseEventLog = $false
         }
         if ($Error[0].ToString().Contains("source is already registered")){
-            Write-Warning "EventLog already registered"
+            Write-Output "EventLog already registered"
         }
     }
 }
@@ -69,7 +69,7 @@ foreach ($account in $ExpiredAccounts){
     # Make sure the account shows no activity since expiration, this would be really weird. Loudly complain if this happens.
     if ($account.LastLogonDate -gt $account.AccountExpirationDate){
         $report.Add($account.UserPrincipalName, "WARN: LastLogonDate newer than AccountExpirationDate. Account left untouched!")
-        Write-Warning "Account Logged on since expiry. This should be impossible!!"
+        Write-Output "Account Logged on since expiry. This should be impossible!!"
         Write-DEAEventLog -EventId 500 -Severity "Warning" -Message "Account $($account.UserPrincipalName) has a LastLogonDate newer than its Expiration Date! Refusing to work on insane accounts"
         $warnings++
         Continue
@@ -84,23 +84,23 @@ foreach ($account in $ExpiredAccounts){
     }
     catch{
         $report.Add($account.UserPrincipalName, "ERROR: Disable-ADAccount Failed!")
-        Write-Warning "Disable-ADAccount failed - this usually means bad credentials!"
+        Write-Output "Disable-ADAccount failed - this usually means bad credentials!"
         Write-DEAEventLog -EventId 403 -Severity "Error" -Message "Error disabling $($account.UserPrincipalName), suspect my user does not have Account Operator or better permissions"
         $errors++
     }
     if ($DisableSuccess){
         $report.Add($account.UserPrincipalName, "SUCCESS: Account disabled!")
-        Write-Warning "Disabled $($account.UserPrincipalName)"
+        Write-Output "Disabled $($account.UserPrincipalName)"
         Write-DEAEventLog -EventId 200 -Message "Account $($account.UserPrincipalName) disabled"
         if ($ClearExpirationAfterDisable){
             try{
                 Clear-ADAccountExpiration -Identity $account -WhatIf:$TestMode
                 Write-DEAEventlog -EventID 200 -Message "Cleared $($account.UserPrincipalName) expiration date!"
-                Write-Host "Cleared $($account.UserPrincipalName) expiration date!"
+                Write-Output "Cleared $($account.UserPrincipalName) expiration date!"
             }
             catch{
                 Write-DEAEventlog -EventID 403 -Message "Failed to clear expiration date: $($account.UserPrincipalName)"
-                Write-Host "Failed to clear expiration date: $($account.UserPrincipalName)"
+                Write-Output "Failed to clear expiration date: $($account.UserPrincipalName)"
             }
         }
     }
@@ -119,12 +119,12 @@ if ($SendEmailReport -And (($success -gt 0) -Or $AlwaysEmail)){
     $LocalHostname = $env:COMPUTERNAME
     $LocalDomain = Get-WMIObject Win32_ComputerSystem| Select-Object -ExpandProperty Domain
     Send-MailMessage -From "$LocalHostname@$LocalDomain" -To $EmailRecipients -Subject $EmailSubject -Body $EmailBody
-    Write-Warning "attempted to send email report"
+    Write-Output "attempted to send email report"
     Write-DEAEventLog -EventId 200 -Message "Attemped to send email report!"
 }
 
-Write-Warning $EmailSubject
-Write-Warning $EmailBody
+Write-Output $EmailSubject
+Write-Output $EmailBody
 
 Write-DEAEventLog -EventId 100 -Message "DisableExpiredAccounts script - done!"
-Write-Warning "DisableExpiredAccounts script - done!"
+Write-Output "DisableExpiredAccounts script - done!"
