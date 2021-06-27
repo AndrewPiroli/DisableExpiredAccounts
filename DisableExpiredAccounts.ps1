@@ -89,7 +89,6 @@ foreach ($account in $ExpiredAccounts){
         $errors++
     }
     if ($DisableSuccess){
-        $report.Add($account.UserPrincipalName, "SUCCESS: Account disabled!")
         Write-Output "Disabled $($account.UserPrincipalName)"
         Write-DEAEventLog -EventId 200 -Message "Account $($account.UserPrincipalName) disabled"
         if ($ClearExpirationAfterDisable){
@@ -97,11 +96,17 @@ foreach ($account in $ExpiredAccounts){
                 Clear-ADAccountExpiration -Identity $account -WhatIf:$TestMode
                 Write-DEAEventlog -EventID 200 -Message "Cleared $($account.UserPrincipalName) expiration date!"
                 Write-Output "Cleared $($account.UserPrincipalName) expiration date!"
+                $report.Add($account.UserPrincipalName, "SUCCESS: Account disabled & Expiration date cleared!")
             }
             catch{
                 Write-DEAEventlog -EventID 403 -Message "Failed to clear expiration date: $($account.UserPrincipalName)"
                 Write-Output "Failed to clear expiration date: $($account.UserPrincipalName)"
+                $report.Add($account.UserPrincipalName, "WARNING: Account disabled but expiration date failed to clear")
+                $warnings++
             }
+        }
+        else{
+            $report.Add($account.UserPrincipalName, "SUCCESS: Account disabled!")
         }
     }
 }
