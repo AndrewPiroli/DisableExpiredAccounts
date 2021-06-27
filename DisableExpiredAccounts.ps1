@@ -120,7 +120,7 @@ if ($TestMode){
     $EmailBody = "TEST MODE ENABLED`r`n$EmailBody"
 }
 
-if ($SendEmailReport -And (($success -gt 0) -Or $AlwaysEmail)){
+if ($SendEmailReport -And (($success+$warnings+$errors -gt 0) -Or $AlwaysEmail)){
     $LocalHostname = $env:COMPUTERNAME
     $LocalDomain = Get-WMIObject Win32_ComputerSystem| Select-Object -ExpandProperty Domain
     Send-MailMessage -From "$LocalHostname@$LocalDomain" -To $EmailRecipients -Subject $EmailSubject -Body $EmailBody
