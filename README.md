@@ -24,7 +24,7 @@ $AlwaysEmail, set to $true or $false to always send a report, even if nothing ha
 
 $ClearExpirationAfterDisable, set to $true or $false to clear the expiration date on the account after it is successfully disabled
 
-$$PSEmailServer, set to a string (in quotes) to the smtp server that the email report will be sent via
+$PSEmailServer, set to a string (in quotes) to the smtp server that the email report will be sent via
 
 To set email recipients, add `$EmailRecipients += "Michael Scott <mscott@dundermifflin.com>"` to the end of the marked user serviceable options area. Obviously replace the name and email with your own, just use the same format (I can't belive I have to say that). Add as many as you like (probably?)
 
@@ -40,7 +40,7 @@ Warning Message - Account to be disabled has logged on since being expired, manu
 
 Event ID: 403
 
-Error Message - Exception in Disable-ADAccount - most likely a permissions error
+Error Message - Exception in Disable-ADAccount/Clear-ADAccountExpiration - most likely a permissions error
 
 Event ID: 200
 

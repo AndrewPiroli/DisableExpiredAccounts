@@ -99,7 +99,7 @@ foreach ($account in $ExpiredAccounts){
                 $report.Add($account.UserPrincipalName, "SUCCESS: Account disabled & Expiration date cleared!")
             }
             catch{
-                Write-DEAEventlog -EventID 403 -Message "Failed to clear expiration date: $($account.UserPrincipalName)"
+                Write-DEAEventlog -EventID 403 -Severity "Error" -Message "Failed to clear expiration date: $($account.UserPrincipalName)"
                 Write-Output "Failed to clear expiration date: $($account.UserPrincipalName)"
                 $report.Add($account.UserPrincipalName, "WARNING: Account disabled but expiration date failed to clear")
                 $warnings++
