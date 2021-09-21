@@ -1,5 +1,14 @@
 ﻿# SPDX-License-Identifier: MIT
 
+# Script Global Variables
+$EmailRecipients = @()
+$report = [ordered]@{}
+$report.Add("User Principal Name", "Status")
+$report.Add("", "")
+$warnings = 0
+$errors = 0
+$success = 0
+#
 # User servicable options
 $TestMode = $true
 $UseEventLog = $true
@@ -9,9 +18,6 @@ $SendEmailReport = $true
 $AlwaysEmail = $false
 $ClearExpirationAfterDisable = $false
 $PSEmailServer = "smtp.dundermifflin.com"
-# No Touch!
-$EmailRecipients = @()
-# Ok, now you can touch again.
 # Add email recipients in this format
 $EmailRecipients += "Michael Scott <mscott@dundermifflin.com>"
 # End user sericable options
@@ -50,13 +56,6 @@ if ($UseEventLog){
 
 Write-DEAEventLog -EventId 100 -Message "Disable Expired Accounts Script: Startup Complete"
 
-# Set up a report for later at the end.
-$report = [ordered]@{}
-$report.Add("User Principle Name", "Status")
-$report.Add("`r`n", "")
-$warnings = 0
-$errors = 0
-$success = 0
 # Pull all expired user accounts
 $ExpiredAccounts = Search-ADAccount -AccountExpired -UsersOnly
 
