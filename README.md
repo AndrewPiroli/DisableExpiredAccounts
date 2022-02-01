@@ -26,6 +26,8 @@ $ClearExpirationAfterDisable, set to $true or $false to clear the expiration dat
 
 $PSEmailServer, set to a string (in quotes) to the smtp server that the email report will be sent via
 
+$AllowAdminDisable, Set to $true (default is $false) to allow the automated disabling of accounts with adminCount > 1 (indicates the user is/was granted administrative privielges).
+
 To set email recipients, add `$EmailRecipients += "Michael Scott <mscott@dundermifflin.com>"` to the end of the marked user serviceable options area. Obviously replace the name and email with your own, just use the same format (I can't belive I have to say that). Add as many as you like (probably?)
 
 ## Event Log Reference
@@ -37,6 +39,10 @@ Informational Message - Script starting up or shutting down
 Event ID: 500
 
 Warning Message - Account to be disabled has logged on since being expired, manual intervention needed
+
+Event ID: 501
+
+Error Message - Account has the adminCount attribute set and the script is configured to not allow disabling of administrative users. Manual intervention required.
 
 Event ID: 403
 

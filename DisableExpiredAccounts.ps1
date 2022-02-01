@@ -18,6 +18,7 @@ $SendEmailReport = $true
 $AlwaysEmail = $false
 $ClearExpirationAfterDisable = $false
 $PSEmailServer = "smtp.dundermifflin.com"
+$AllowAdminDisable = $false
 # Add email recipients in this format
 $EmailRecipients += "Michael Scott <mscott@dundermifflin.com>"
 # End user sericable options
@@ -64,6 +65,19 @@ foreach ($account in $ExpiredAccounts){
     # If the account is already disabled, we don't care, so skip it and move on to the next one. Do not add to the final report.
     if ($account.Enabled -eq $false){
         Continue
+    }
+    # Even though it's a terrible idea to run the script with permissions to disable admins anyway
+    # we should add a guard rail just in case an admin account comes up.
+    # Are there better admin checks? Yes. Should the script support OU and group level exclusions? Yes.
+    # We will get there at some point.
+    if (-not $AllowAdminDisable){
+        if ((Get-ADUser $account -Properties adminCount).adminCount -gt 0){ # This works even if adminCount is not set (acts like $null -gt 0)
+            $report.Add($account.UserPrincipalName, "ERROR: User has adminCount! Refusing to disable an administrative user.")
+            Write-Output "$($account.UserPrincipalName) has adminCount! Refusing to disable an administrative user."
+            Write-DEAEventlog -EventID 501 -Severity "Error" -Message "$($account.UserPrincipalName) has adminCount! Refusing to disable an administrative user."
+            $errors++
+            Continue
+        }
     }
     # Make sure the account shows no activity since expiration, this would be really weird. Loudly complain if this happens.
     if ($account.LastLogonDate -gt $account.AccountExpirationDate){
