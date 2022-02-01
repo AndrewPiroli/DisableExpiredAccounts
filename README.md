@@ -8,25 +8,29 @@ Run the script as a user with permissions to disable accounts, maybe set it up a
 
 ## User options
 
+On/Off (boolean) togles are set with $true or $false
+
+String options must be wrapped in quotes.
+
 User serviceable options:
 
-$TestMode, set to $true or $false to enable a dry run. No Changes will be made in AD
+$TestMode, set to $true to perform a dry run, no changes will be made in AD. $false enables making changes. Default: $true
 
-$UseEventLog, set to $true or $false to enable Event Log logging.
+$UseEventLog, set to $true or $false to control Event Log logging. Default: $true
 
-$EventLogDest, set to a string (in quotes) to the Event Log that will be used for logging.
+$EventLogDest, set to a string the Event Log that will be used for logging. Default: "Application"
 
-$EventLogSource, set to a string (in quotes) to the name of the source the script will log as to the Event Log
+$EventLogSource, set to a string the Event Log source. Default: "DisableExpiredAccounts"
 
-$SendEmailReport, set to $true or $false to enable the email report.
+$SendEmailReport, set to $true to control the email report. Default: $true
 
-$AlwaysEmail, set to $true or $false to always send a report, even if nothing happened.
+$AlwaysEmail, set to $true to always send an email report, even if nothing happened. Default: $false
 
-$ClearExpirationAfterDisable, set to $true or $false to clear the expiration date on the account after it is successfully disabled
+$ClearExpirationAfterDisable, set to $true to clear the expiration date on the account after it is successfully disabled. Default: $false
 
-$PSEmailServer, set to a string (in quotes) to the smtp server that the email report will be sent via
+$PSEmailServer, set to a string (in quotes) to the smtp server that the email report will be sent via. Default value is a placeholder, this must be configured correctly to use the email feature.
 
-$AllowAdminDisable, Set to $true (default is $false) to allow the automated disabling of accounts with adminCount > 1 (indicates the user is/was granted administrative privielges).
+$AllowAdminDisable, set to $true to allow the automated disabling of accounts with adminCount > 1 (indicates the user is/was granted administrative privielges). Default: $false
 
 To set email recipients, add `$EmailRecipients += "Michael Scott <mscott@dundermifflin.com>"` to the end of the marked user serviceable options area. Obviously replace the name and email with your own, just use the same format (I can't belive I have to say that). Add as many as you like (probably?)
 
@@ -38,7 +42,7 @@ Informational Message - Script starting up or shutting down
 
 Event ID: 500
 
-Warning Message - Account to be disabled has logged on since being expired, manual intervention needed
+Warning Message - Account to be disabled has logged on since being expired, manual intervention required
 
 Event ID: 501
 
