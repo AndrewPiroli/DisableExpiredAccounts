@@ -34,5 +34,5 @@ To set email recipients, add `$EmailRecipients += "Michael Scott <mscott@dunderm
 |    200   	| Informational 	|                                                     Account disabled                                                    	|
 |    200   	| Informational 	|                                                    Email report sent                                                    	|
 |    403   	|     Error     	|                          Exception disabling account or clearing expiration. Check permissions.                         	|
-|    500   	|    Warning    	|                   Account to be disabled has logged on after expiration. Manual intervention required.                  	|
+|    500   	|     Error     	|                   Account to be disabled has logged on after expiration. Manual intervention required.                  	|
 |    501   	|     Error     	| Account to be disabled has adminCount and the script is configured to not disable admins. Manual intervention required. 	|

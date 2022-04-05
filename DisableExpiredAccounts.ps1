@@ -83,8 +83,8 @@ foreach ($account in $ExpiredAccounts){
     if ($account.LastLogonDate -gt $account.AccountExpirationDate){
         $report.Add($account.UserPrincipalName, "WARN: LastLogonDate newer than AccountExpirationDate. Account left untouched!")
         Write-Output "Account Logged on since expiry. This should be impossible!!"
-        Write-DEAEventLog -EventId 500 -Severity "Warning" -Message "Account $($account.UserPrincipalName) has a LastLogonDate newer than its Expiration Date! Refusing to work on insane accounts"
-        $warnings++
+        Write-DEAEventLog -EventId 500 -Severity "Error" -Message "Account $($account.UserPrincipalName) has a LastLogonDate newer than its Expiration Date! Refusing to work on insane accounts"
+        $errors++
         Continue
     }
     # Time to disable their account
