@@ -23,6 +23,7 @@ String options must be wrapped in quotes.
 | $ClearExpirationAfterDisable 	|                                 Clear the expiration date on any account disabled by this script.                                 	| Boolean 	|          $false          	|
 |        $PSEmailServer        	|                                     The host of the SMTP server to send the email report via.                                     	|  String 	|           None           	|
 |      $AllowAdminDisable      	|                                   Allow the script to disable a user with administrative rights.                                  	| Boolean 	|          $false          	|
+|         $MaxDisable      	|                                     The maximum number of users the script may disable at one time.                                  	| Integer 	|             5          	|
 
 To set email recipients, add `$EmailRecipients += "Michael Scott <mscott@dundermifflin.com>"` to the end of the marked user serviceable options area. Obviously replace the name and email with your own, just use the same format (I can't belive I have to say that). Add as many as you like (probably?)
 
@@ -36,3 +37,4 @@ To set email recipients, add `$EmailRecipients += "Michael Scott <mscott@dunderm
 |    403   	|     Error     	|                          Exception disabling account or clearing expiration. Check permissions.                         	|
 |    500   	|     Error     	|                   Account to be disabled has logged on after expiration. Manual intervention required.                  	|
 |    501   	|     Error     	| Account to be disabled has adminCount and the script is configured to not disable admins. Manual intervention required. 	|
+|    502   	|     Error     	|                    Max number of automated actions reached. Manual intervention required or run the script again.             |

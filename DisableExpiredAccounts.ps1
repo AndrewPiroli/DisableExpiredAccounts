@@ -19,6 +19,7 @@ $AlwaysEmail = $false
 $ClearExpirationAfterDisable = $false
 $PSEmailServer = "smtp.dundermifflin.com"
 $AllowAdminDisable = $false
+$MaxDisable = 5
 # Add email recipients in this format
 $EmailRecipients += "Michael Scott <mscott@dundermifflin.com>"
 # End user sericable options
@@ -64,6 +65,13 @@ $ExpiredAccounts = Search-ADAccount -AccountExpired -UsersOnly
 foreach ($account in $ExpiredAccounts){
     # If the account is already disabled, we don't care, so skip it and move on to the next one. Do not add to the final report.
     if ($account.Enabled -eq $false){
+        Continue
+    }
+    # Check to make sure we haven't disabled over the limit
+    if (($success + $warnings) -ge $MaxDisable){
+        $report.Add($account.UserPrincipalName, "ERROR: maximum number of actions reached! Increase `$MaxDisable or run the script again.")
+        Write-DEAEventLog -EventID 502 -Severity "Error" -Message "Reached maximum number of actions can not disable: $($account.UserPrincipalName). Increase `$MaxDisable or run the script again."
+        $errors++
         Continue
     }
     # Even though it's a terrible idea to run the script with permissions to disable admins anyway
