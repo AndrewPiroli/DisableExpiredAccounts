@@ -29,7 +29,6 @@ $success = 0
 $RestrictedUsers = New-Object System.Collections.Generic.HashSet[Guid]
 foreach ($rgroup in $RestrictedGroups) {
     foreach ($user in Get-ADGroupMember -Identity $rgroup -Recursive) {
-        Write-Output $user
         $RestrictedUsers.Add($user.objectGUID)
     }
 }
