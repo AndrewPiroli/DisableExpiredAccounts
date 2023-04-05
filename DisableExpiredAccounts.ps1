@@ -2,7 +2,7 @@
 
 # Script Global Variables
 $EmailRecipients = @()
-# User servicable options
+# User serviceable options
 $TestMode = $true
 $UseEventLog = $true
 $EventLogDest = "Application"
@@ -11,12 +11,12 @@ $SendEmailReport = $true
 $AlwaysEmail = $false
 $ClearExpirationAfterDisable = $false
 $PSEmailServer = "smtp.dundermifflin.com"
-$AllowAdminDisable = $false # Warning, this disables adminCount and Restricted Groups check!!
-$RestrictedGroups = @("Administrators", "Enterprise Admins", "Domain Admins", "Schema Admins", "Protected Users")
+$AllowAdminDisable = $false # Warning, setting this to true disables adminCount and restricted groups check!
+$RestrictedGroups = @("Administrators", "Enterprise Admins", "Domain Admins", "Schema Admins", "Protected Users") # Users in these groups will not be disabled
 $MaxDisable = 5
 # Add email recipients in this format
 $EmailRecipients += "Michael Scott <mscott@dundermifflin.com>"
-# End user sericable options
+# End user serviceable options
 #
 #
 $report = [ordered]@{}
