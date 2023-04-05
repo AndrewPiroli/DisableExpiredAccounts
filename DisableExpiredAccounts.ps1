@@ -2,13 +2,6 @@
 
 # Script Global Variables
 $EmailRecipients = @()
-$report = [ordered]@{}
-$report.Add("User Principal Name", "Status")
-$report.Add("", "")
-$warnings = 0
-$errors = 0
-$success = 0
-#
 # User servicable options
 $TestMode = $true
 $UseEventLog = $true
@@ -18,11 +11,28 @@ $SendEmailReport = $true
 $AlwaysEmail = $false
 $ClearExpirationAfterDisable = $false
 $PSEmailServer = "smtp.dundermifflin.com"
-$AllowAdminDisable = $false
+$AllowAdminDisable = $false # Warning, this disables adminCount and Restricted Groups check!!
+$RestrictedGroups = @("Administrators", "Enterprise Admins", "Domain Admins", "Schema Admins", "Protected Users")
 $MaxDisable = 5
 # Add email recipients in this format
 $EmailRecipients += "Michael Scott <mscott@dundermifflin.com>"
 # End user sericable options
+#
+#
+$report = [ordered]@{}
+$report.Add("User Principal Name", "Status")
+$report.Add("", "")
+$warnings = 0
+$errors = 0
+$success = 0
+# build restricted users from restricted groups
+$RestrictedUsers = New-Object System.Collections.Generic.HashSet[Guid]
+foreach ($rgroup in $RestrictedGroups) {
+    foreach ($user in Get-ADGroupMember -Identity $rgroup -Recursive) {
+        Write-Output $user
+        $RestrictedUsers.Add($user.objectGUID)
+    }
+}
 
 # Helper function for eventlog
 function Write-DEAEventlog {
@@ -76,9 +86,16 @@ foreach ($account in $ExpiredAccounts){
     }
     # Even though it's a terrible idea to run the script with permissions to disable admins anyway
     # we should add a guard rail just in case an admin account comes up.
-    # Are there better admin checks? Yes. Should the script support OU and group level exclusions? Yes.
+    # Are there better admin checks? Yes. Should the script support OU level exclusions? Yes.
     # We will get there at some point.
     if (-not $AllowAdminDisable){
+        if ($RestrictedUsers.Contains($account.objectGUID)) {
+            $report.Add($account.UserPrincipalName, "ERROR: User in an administrative group! Refusing to disable an administrative user.")
+            Write-Output "$($account.UserPrincipalName) in an administrative group! Refusing to disable an administrative user."
+            Write-DEAEventlog -EventID 501 -Severity "Error" -Message "$($account.UserPrincipalName) in an administrative group! Refusing to disable an administrative user."
+            $errors++
+            Continue
+        }
         if ((Get-ADUser $account -Properties adminCount).adminCount -gt 0){ # This works even if adminCount is not set (acts like $null -gt 0)
             $report.Add($account.UserPrincipalName, "ERROR: User has adminCount! Refusing to disable an administrative user.")
             Write-Output "$($account.UserPrincipalName) has adminCount! Refusing to disable an administrative user."
@@ -115,7 +132,7 @@ foreach ($account in $ExpiredAccounts){
         if ($ClearExpirationAfterDisable){
             try{
                 Clear-ADAccountExpiration -Identity $account -WhatIf:$TestMode
-                Write-DEAEventlog -EventID 200 -Message "Cleared $($account.UserPrincipalName) expiration date!"
+                Write-DEAEventlog -EventID 201 -Message "Cleared $($account.UserPrincipalName) expiration date!"
                 Write-Output "Cleared $($account.UserPrincipalName) expiration date!"
                 $report.Add($account.UserPrincipalName, "SUCCESS: Account disabled & Expiration date cleared!")
             }
@@ -146,11 +163,11 @@ if ($SendEmailReport -And (($success+$warnings+$errors -gt 0) -Or $AlwaysEmail))
     $LocalDomain = Get-WMIObject Win32_ComputerSystem| Select-Object -ExpandProperty Domain
     Send-MailMessage -From "$LocalHostname@$LocalDomain" -To $EmailRecipients -Subject $EmailSubject -Body $EmailBody
     Write-Output "attempted to send email report"
-    Write-DEAEventLog -EventId 200 -Message "Attemped to send email report!"
+    Write-DEAEventLog -EventId 202 -Message "Attemped to send email report!"
 }
 
 Write-Output $EmailSubject
 Write-Output $EmailBody
 
-Write-DEAEventLog -EventId 100 -Message "DisableExpiredAccounts script - done!"
+Write-DEAEventLog -EventId 101 -Message "DisableExpiredAccounts script - done!"
 Write-Output "DisableExpiredAccounts script - done!"
